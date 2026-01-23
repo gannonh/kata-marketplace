@@ -1,13 +1,12 @@
-# claude-code-plugins
+# cc-plugins
 
 Personal plugin marketplace for Claude Code extensions.
 
 ## Installation
 
 Add this marketplace:
-
 ```
-/plugin marketplace add gannonh/claude-code-plugins
+/plugin marketplace add gannonh/cc-plugins
 ```
 
 ## Available Plugins
@@ -17,7 +16,7 @@ Add this marketplace:
 Spec-driven development framework for Claude Code.
 
 ```
-/plugin install kata@claude-code-plugins
+/plugin install kata@cc-plugins
 ```
 
 [Learn more](https://github.com/gannonh/kata)
