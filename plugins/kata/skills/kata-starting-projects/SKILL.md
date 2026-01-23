@@ -98,11 +98,11 @@ Exit command.
 
 **Display stage banner:**
 
-```
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  Kata ► QUESTIONING
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
+
 
 **Open the conversation:**
 
@@ -286,8 +286,8 @@ questions: [
     question: "Use PR-based release workflow?",
     multiSelect: false,
     options: [
-      { label: "Yes", description: "Protect main, create PRs, tag via GitHub Release" },
-      { label: "No (Recommended)", description: "Commit directly to main, create tags locally" }
+      { label: "Yes (Recommended)", description: "Protect main, create PRs, tag via GitHub Release" },
+      { label: "No", description: "Commit directly to main, create tags locally" }
     ]
   }
 ]
@@ -343,6 +343,15 @@ questions: [
       { label: "Quality", description: "Opus for research/roadmap — higher cost, deeper analysis" },
       { label: "Budget", description: "Haiku where possible — fastest, lowest cost" }
     ]
+  },
+  {
+    header: "Statusline",
+    question: "Enable Kata statusline? (shows model, context usage, update status)",
+    multiSelect: false,
+    options: [
+      { label: "Yes (Recommended)", description: "Display live session info in Claude Code statusline" },
+      { label: "No", description: "Use default Claude Code statusline" }
+    ]
   }
 ]
 ```
@@ -357,6 +366,9 @@ Create `.planning/config.json` with all settings:
   "commit_docs": true|false,
   "pr_workflow": true|false,
   "model_profile": "quality|balanced|budget",
+  "display": {
+    "statusline": true|false
+  },
   "workflow": {
     "research": true|false,
     "plan_check": true|false,
@@ -520,6 +532,52 @@ Add NPM_TOKEN secret to your GitHub repository:
 The workflow will auto-publish when you merge PRs that bump package.json version.
 ```
 
+**If statusline = Yes:**
+
+Update `.claude/settings.json` with statusline configuration:
+
+```bash
+# Ensure .claude directory exists
+mkdir -p .claude
+
+# Check if settings.json exists and has statusLine
+if [ -f .claude/settings.json ]; then
+  # Check if statusLine already configured
+  if grep -q '"statusLine"' .claude/settings.json; then
+    echo "Statusline already configured in .claude/settings.json"
+  else
+    # Add statusLine to existing settings using node
+    node -e "
+      const fs = require('fs');
+      const settings = JSON.parse(fs.readFileSync('.claude/settings.json', 'utf8'));
+      settings.statusLine = {
+        type: 'command',
+        command: 'node \"\$CLAUDE_PROJECT_DIR/.claude/hooks/kata-statusline.js\"'
+      };
+      fs.writeFileSync('.claude/settings.json', JSON.stringify(settings, null, 2));
+    "
+    echo "✓ Statusline enabled in .claude/settings.json"
+  fi
+else
+  # Create new settings.json with statusLine
+  cat > .claude/settings.json << 'SETTINGS_EOF'
+{
+  "statusLine": {
+    "type": "command",
+    "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/kata-statusline.js\""
+  }
+}
+SETTINGS_EOF
+  echo "✓ Created .claude/settings.json with statusline"
+fi
+```
+
+The statusline hook will be automatically installed on next session start by Kata's SessionStart hook.
+
+**If statusline = No:**
+
+No changes to `.claude/settings.json`.
+
 ## Phase 5.5: Resolve Model Profile
 
 Read model profile for agent spawning:
@@ -552,13 +610,13 @@ Use AskUserQuestion:
 **If "Research first":**
 
 Display stage banner:
-```
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  Kata ► RESEARCHING
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Researching [domain] ecosystem...
-```
+
 
 Create research directory:
 ```bash
@@ -765,7 +823,7 @@ Commit after writing.
 ```
 
 Display research complete banner and key findings:
-```
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  Kata ► RESEARCH COMPLETE ✓
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -777,18 +835,18 @@ Display research complete banner and key findings:
 **Watch Out For:** [from SUMMARY.md]
 
 Files: `.planning/research/`
-```
+
 
 **If "Skip research":** Continue to Phase 7.
 
 ## Phase 7: Define Requirements
 
 Display stage banner:
-```
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  Kata ► DEFINING REQUIREMENTS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
+
 
 **Load context:**
 
@@ -927,13 +985,13 @@ EOF
 ## Phase 8: Create Roadmap
 
 Display stage banner:
-```
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  Kata ► CREATING ROADMAP
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ◆ Spawning roadmapper...
-```
+
 
 Spawn kata-roadmapper agent with context:
 
@@ -1070,7 +1128,7 @@ EOF
 
 Present completion with next steps:
 
-```
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  Kata ► PROJECT INITIALIZED ✓
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1103,7 +1161,7 @@ Present completion with next steps:
 - `/kata:phase-plan 1` — skip discussion, plan directly
 
 ───────────────────────────────────────────────────────────────
-```
+
 
 </process>
 
