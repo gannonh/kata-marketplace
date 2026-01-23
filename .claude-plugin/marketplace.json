@@ -1,10 +1,10 @@
 {
-  "name": "cc-plugins",
+  "name": "kata-marketplace",
   "owner": {
     "name": "Gannon Hall"
   },
   "metadata": {
-    "description": "Personal plugin marketplace for Claude Code extensions"
+    "description": "Marketplace for Kata - spec-driven development framework for Claude Code"
   },
   "plugins": [
     {
