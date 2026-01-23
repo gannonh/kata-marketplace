@@ -1,0 +1,28 @@
+{
+  "name": "claude-code-plugins",
+  "owner": {
+    "name": "Gannon Hall"
+  },
+  "metadata": {
+    "description": "Personal plugin marketplace for Claude Code extensions"
+  },
+  "plugins": [
+    {
+      "name": "kata",
+      "source": {
+        "source": "github",
+        "repo": "gannonh/kata"
+      },
+      "description": "Spec-driven development framework for Claude Code. Provides structured workflows for requirements gathering, research, planning, execution, and verification.",
+      "version": "0.1.9",
+      "author": {
+        "name": "gannonh",
+        "url": "https://github.com/gannonh"
+      },
+      "homepage": "https://github.com/gannonh/kata",
+      "repository": "https://github.com/gannonh/kata",
+      "license": "MIT",
+      "keywords": ["claude", "claude-code", "spec-driven-development", "meta-prompting", "context-engineering", "ai-development"]
+    }
+  ]
+}
