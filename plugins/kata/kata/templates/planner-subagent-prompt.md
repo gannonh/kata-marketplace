@@ -72,7 +72,7 @@ Before returning PLANNING COMPLETE:
 ```python
 Task(
   prompt=filled_template,
-  subagent_type="kata-planner",
+  subagent_type="kata:kata-planner",
   description="Plan Phase {phase}"
 )
 ```
@@ -81,7 +81,7 @@ Task(
 ```python
 Task(
   prompt=filled_template,  # with mode: gap_closure
-  subagent_type="kata-planner",
+  subagent_type="kata:kata-planner",
   description="Plan gaps for Phase {phase}"
 )
 ```

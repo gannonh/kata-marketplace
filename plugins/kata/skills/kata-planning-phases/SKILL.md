@@ -203,7 +203,7 @@ Write research findings to: {phase_dir}/{phase}-RESEARCH.md
 ```
 Task(
   prompt=research_prompt,
-  subagent_type="kata-phase-researcher",
+  subagent_type="kata:kata-phase-researcher",
   model="{researcher_model}",
   description="Research Phase {phase}"
 )
@@ -312,7 +312,7 @@ Before returning PLANNING COMPLETE:
 ```
 Task(
   prompt=filled_prompt,
-  subagent_type="kata-planner",
+  subagent_type="kata:kata-planner",
   model="{planner_model}",
   description="Plan Phase {phase}"
 )
@@ -384,7 +384,7 @@ Return one of:
 ```
 Task(
   prompt=checker_prompt,
-  subagent_type="kata-plan-checker",
+  subagent_type="kata:kata-plan-checker",
   model="{checker_model}",
   description="Verify Phase {phase} plans"
 )
@@ -442,7 +442,7 @@ Return what changed.
 ```
 Task(
   prompt=revision_prompt,
-  subagent_type="kata-planner",
+  subagent_type="kata:kata-planner",
   model="{planner_model}",
   description="Revise Phase {phase} plans"
 )

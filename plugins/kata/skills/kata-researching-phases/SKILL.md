@@ -151,7 +151,7 @@ Write to: .planning/phases/${PHASE}-{slug}/${PHASE}-RESEARCH.md
 ```
 Task(
   prompt=filled_prompt,
-  subagent_type="kata-phase-researcher",
+  subagent_type="kata:kata-phase-researcher",
   model="{researcher_model}",
   description="Research Phase {phase}"
 )
@@ -185,7 +185,7 @@ Research file: @.planning/phases/${PHASE}-{slug}/${PHASE}-RESEARCH.md
 ```
 Task(
   prompt=continuation_prompt,
-  subagent_type="kata-phase-researcher",
+  subagent_type="kata:kata-phase-researcher",
   model="{researcher_model}",
   description="Continue research Phase {phase}"
 )

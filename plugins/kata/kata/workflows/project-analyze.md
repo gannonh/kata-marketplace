@@ -91,7 +91,7 @@ Continue to spawn_agents.
 <step name="spawn_agents">
 Spawn 4 parallel kata-codebase-mapper agents.
 
-Use Task tool with `subagent_type="kata-codebase-mapper"`, `model="{mapper_model}"`, and `run_in_background=true` for parallel execution.
+Use Task tool with `subagent_type="kata:kata-codebase-mapper"`, `model="{mapper_model}"`, and `run_in_background=true` for parallel execution.
 
 **CRITICAL:** Use the dedicated `kata-codebase-mapper` agent, NOT `Explore`. The mapper agent writes documents directly.
 

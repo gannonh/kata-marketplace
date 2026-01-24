@@ -103,7 +103,7 @@ Phase exports: {from SUMMARYs}
 API routes: {routes created}
 
 Verify cross-phase wiring and E2E user flows.",
-  subagent_type="kata-integration-checker",
+  subagent_type="kata:kata-integration-checker",
   model="{integration_checker_model}"
 )
 ```

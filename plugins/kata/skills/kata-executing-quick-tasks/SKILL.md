@@ -162,7 +162,7 @@ Write plan to: ${QUICK_DIR}/${next_num}-PLAN.md
 Return: ## PLANNING COMPLETE with plan path
 </output>
 ",
-  subagent_type="kata-planner",
+  subagent_type="kata:kata-planner",
   model="{planner_model}",
   description="Quick plan: ${DESCRIPTION}"
 )
@@ -196,7 +196,7 @@ Project state: @.planning/STATE.md
 - Do NOT update ROADMAP.md (quick tasks are separate from planned phases)
 </constraints>
 ",
-  subagent_type="kata-executor",
+  subagent_type="kata:kata-executor",
   model="{executor_model}",
   description="Execute: ${DESCRIPTION}"
 )
