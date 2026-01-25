@@ -1,5 +1,5 @@
 ---
-name: kata-roadmapper
+name: roadmapper
 description: Creates project roadmaps with phase breakdown, requirement mapping, success criteria derivation, and coverage validation. Spawned by /kata:project-new orchestrator.
 tools: Read, Write, Bash, Glob, Grep
 color: purple

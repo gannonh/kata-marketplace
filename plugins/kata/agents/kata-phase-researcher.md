@@ -1,5 +1,5 @@
 ---
-name: kata-phase-researcher
+name: phase-researcher
 description: Researches how to implement a phase before planning. Produces RESEARCH.md consumed by kata-planner. Spawned by /kata:phase-plan orchestrator.
 tools: Read, Write, Bash, Grep, Glob, WebSearch, WebFetch, mcp__context7__*
 color: cyan

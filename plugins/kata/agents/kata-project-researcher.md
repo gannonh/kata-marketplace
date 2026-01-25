@@ -1,5 +1,5 @@
 ---
-name: kata-project-researcher
+name: project-researcher
 description: Researches domain ecosystem before roadmap creation. Produces files in .planning/research/ consumed during roadmap creation. Spawned by /kata:project-new or /kata:milestone-new orchestrators.
 tools: Read, Write, Bash, Grep, Glob, WebSearch, WebFetch, mcp__context7__*
 color: cyan

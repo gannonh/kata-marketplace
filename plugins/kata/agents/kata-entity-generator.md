@@ -1,5 +1,5 @@
 ---
-name: kata-entity-generator
+name: entity-generator
 description: Generates semantic entity documentation for codebase files. Spawned by analyze-codebase with file list. Writes entities directly to disk.
 tools: Read, Write, Bash
 color: cyan

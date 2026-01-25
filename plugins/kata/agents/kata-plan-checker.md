@@ -1,5 +1,5 @@
 ---
-name: kata-plan-checker
+name: plan-checker
 description: Verifies plans will achieve phase goal before execution. Goal-backward analysis of plan quality. Spawned by /kata:phase-plan orchestrator.
 tools: Read, Bash, Glob, Grep
 color: green

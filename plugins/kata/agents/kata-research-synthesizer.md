@@ -1,5 +1,5 @@
 ---
-name: kata-research-synthesizer
+name: research-synthesizer
 description: Synthesizes research outputs from parallel researcher agents into SUMMARY.md. Spawned by /kata:project-new after 4 researcher agents complete.
 tools: Read, Write, Bash
 color: purple

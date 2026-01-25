@@ -1,5 +1,5 @@
 ---
-name: kata-executor
+name: executor
 description: Executes Kata plans with atomic commits, deviation handling, checkpoint protocols, and state management. Spawned by phase-execute orchestrator or execute-plan command.
 tools: Read, Write, Edit, Bash, Grep, Glob
 color: yellow
