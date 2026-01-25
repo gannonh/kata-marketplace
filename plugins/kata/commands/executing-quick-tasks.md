@@ -1,5 +1,5 @@
 ---
-name: executing-quick-tasks
+name: kata:executing-quick-tasks
 description: Execute a quick task with Kata guarantees (atomic commits, state tracking) but skip optional agents
 argument-hint: <description>
 version: 0.1.0

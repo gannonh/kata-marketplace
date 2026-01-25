@@ -1,5 +1,5 @@
 ---
-name: verifying-work
+name: kata:verifying-work
 description: Validate built features through conversational UAT
 argument-hint: [phase number, e.g., '4']
 version: 0.1.0

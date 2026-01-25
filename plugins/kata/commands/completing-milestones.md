@@ -1,5 +1,5 @@
 ---
-name: completing-milestones
+name: kata:completing-milestones
 description: Archive completed milestone and prepare for next version
 argument-hint: <version>
 version: 0.1.0

@@ -1,5 +1,5 @@
 ---
-name: updating
+name: kata:updating
 description: Update Kata to latest version with changelog display
 argument-hint: <description>
 version: 0.1.0

@@ -1,5 +1,5 @@
 ---
-name: setting-profiles
+name: kata:setting-profiles
 description: Switch model profile for Kata agents (quality/balanced/budget)
 argument-hint: <description>
 version: 0.1.0

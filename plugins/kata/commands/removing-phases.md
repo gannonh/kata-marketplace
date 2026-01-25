@@ -1,5 +1,5 @@
 ---
-name: removing-phases
+name: kata:removing-phases
 description: Remove a future phase from roadmap and renumber subsequent phases
 argument-hint: <phase-number>
 version: 0.1.0

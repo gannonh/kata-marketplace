@@ -1,5 +1,5 @@
 ---
-name: researching-phases
+name: kata:researching-phases
 description: Research how to implement a phase (standalone - usually use /kata:planning-phases instead)
 argument-hint: [phase]
 version: 0.1.0

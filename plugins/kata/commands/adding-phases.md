@@ -1,5 +1,5 @@
 ---
-name: adding-phases
+name: kata:adding-phases
 description: Add phase to end of current milestone in roadmap
 version: 0.1.0
 argument-hint: <description>

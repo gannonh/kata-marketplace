@@ -1,5 +1,5 @@
 ---
-name: resuming-work
+name: kata:resuming-work
 description: Resume work from previous session with full context restoration
 argument-hint: <description>
 version: 0.1.0

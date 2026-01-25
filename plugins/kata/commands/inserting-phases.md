@@ -1,5 +1,5 @@
 ---
-name: inserting-phases
+name: kata:inserting-phases
 description: Insert urgent work as decimal phase (e.g., 72.1) between existing phases
 argument-hint: <after> <description>
 version: 0.1.0

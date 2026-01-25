@@ -1,5 +1,5 @@
 ---
-name: adding-todos
+name: kata:adding-todos
 description: Capture idea or task as todo from current conversation context
 argument-hint: [optional description]
 version: 0.1.0

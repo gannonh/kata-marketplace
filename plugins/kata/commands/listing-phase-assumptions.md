@@ -1,5 +1,5 @@
 ---
-name: listing-phase-assumptions
+name: kata:listing-phase-assumptions
 description: Surface Claude's assumptions about a phase approach before planning
 argument-hint: [phase]
 version: 0.1.0

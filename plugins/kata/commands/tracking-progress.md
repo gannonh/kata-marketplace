@@ -1,5 +1,5 @@
 ---
-name: tracking-progress
+name: kata:tracking-progress
 description: Check project progress, show context, and route to next action (execute or plan)
 argument-hint: <description>
 version: 0.1.0

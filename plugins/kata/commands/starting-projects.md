@@ -1,5 +1,5 @@
 ---
-name: starting-projects
+name: kata:starting-projects
 description: Initialize a new project with deep context gathering and PROJECT.md
 argument-hint: <description>
 version: 0.1.0

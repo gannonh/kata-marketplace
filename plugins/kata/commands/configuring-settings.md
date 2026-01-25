@@ -1,5 +1,5 @@
 ---
-name: configuring-settings
+name: kata:configuring-settings
 description: Configure Kata workflow toggles and model profile
 argument-hint: <description>
 version: 0.1.0

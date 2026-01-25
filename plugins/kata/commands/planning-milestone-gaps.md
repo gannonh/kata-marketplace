@@ -1,5 +1,5 @@
 ---
-name: planning-milestone-gaps
+name: kata:planning-milestone-gaps
 description: Create phases to close all gaps identified by milestone audit
 argument-hint: <description>
 version: 0.1.0

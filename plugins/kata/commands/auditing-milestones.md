@@ -1,5 +1,5 @@
 ---
-name: auditing-milestones
+name: kata:auditing-milestones
 description: Audit milestone completion against original intent before archiving
 argument-hint: [version]
 version: 0.1.0

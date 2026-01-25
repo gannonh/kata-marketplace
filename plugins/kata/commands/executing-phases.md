@@ -1,5 +1,5 @@
 ---
-name: executing-phases
+name: kata:executing-phases
 description: Execute all plans in a phase with wave-based parallelization
 argument-hint: <phase-number> [--gaps-only]
 version: 0.1.0

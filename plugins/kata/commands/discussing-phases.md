@@ -1,5 +1,5 @@
 ---
-name: discussing-phases
+name: kata:discussing-phases
 description: Gather phase context through adaptive questioning before planning
 argument-hint: <phase>
 version: 0.1.0
