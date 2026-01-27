@@ -61,6 +61,54 @@ Phase: $ARGUMENTS
    - Count PLAN.md files
    - Error if no plans found
 
+1.5. **Create Phase Branch (pr_workflow only)**
+
+   Read pr_workflow config:
+   ```bash
+   PR_WORKFLOW=$(cat .planning/config.json 2>/dev/null | grep -o '"pr_workflow"[[:space:]]*:[[:space:]]*[^,}]*' | grep -o 'true\|false' || echo "false")
+   ```
+
+   **If PR_WORKFLOW=false:** Skip to step 2.
+
+   **If PR_WORKFLOW=true:**
+   1. Get milestone version from ROADMAP.md:
+      ```bash
+      MILESTONE=$(grep -oE 'v[0-9]+\.[0-9]+(\.[0-9]+)?' .planning/ROADMAP.md | head -1 | tr -d 'v')
+      ```
+   2. Get phase number and slug from PHASE_DIR:
+      ```bash
+      PHASE_NUM=$(basename "$PHASE_DIR" | sed -E 's/^([0-9]+)-.*/\1/')
+      SLUG=$(basename "$PHASE_DIR" | sed -E 's/^[0-9]+-//')
+      ```
+   3. Infer branch type from phase goal (feat/fix/docs/refactor/chore, default feat):
+      ```bash
+      PHASE_GOAL=$(grep -A 5 "Phase ${PHASE_NUM}:" .planning/ROADMAP.md | grep "Goal:" | head -1 || echo "")
+      if echo "$PHASE_GOAL" | grep -qi "fix\|bug\|patch"; then
+        BRANCH_TYPE="fix"
+      elif echo "$PHASE_GOAL" | grep -qi "doc\|readme\|comment"; then
+        BRANCH_TYPE="docs"
+      elif echo "$PHASE_GOAL" | grep -qi "refactor\|restructure\|reorganize"; then
+        BRANCH_TYPE="refactor"
+      elif echo "$PHASE_GOAL" | grep -qi "chore\|config\|setup"; then
+        BRANCH_TYPE="chore"
+      else
+        BRANCH_TYPE="feat"
+      fi
+      ```
+   4. Create branch with re-run protection:
+      ```bash
+      BRANCH="${BRANCH_TYPE}/v${MILESTONE}-${PHASE_NUM}-${SLUG}"
+      if git show-ref --verify --quiet refs/heads/"$BRANCH"; then
+        git checkout "$BRANCH"
+        echo "Branch $BRANCH exists, resuming on it"
+      else
+        git checkout -b "$BRANCH"
+        echo "Created branch $BRANCH"
+      fi
+      ```
+
+   Store BRANCH variable for use in step 4.5 and step 10.5.
+
 2. **Discover plans**
    - List all *-PLAN.md files in phase directory
    - Check which have *-SUMMARY.md (already complete)
@@ -77,6 +125,133 @@ Phase: $ARGUMENTS
    - Spawn `kata-executor` for each plan in wave (parallel Task calls)
    - Wait for completion (Task blocks)
    - Verify SUMMARYs created
+   - **Update GitHub issue checkboxes (if enabled):**
+
+     Build COMPLETED_PLANS_IN_WAVE from SUMMARY.md files created this wave:
+     ```bash
+     # Get plan numbers from SUMMARYs that exist after this wave
+     COMPLETED_PLANS_IN_WAVE=""
+     for summary in ${PHASE_DIR}/*-SUMMARY.md; do
+       # Extract plan number from filename (e.g., 04-01-SUMMARY.md -> 01)
+       plan_num=$(basename "$summary" | sed -E 's/^[0-9]+-([0-9]+)-SUMMARY\.md$/\1/')
+       # Check if this plan was in the current wave (from frontmatter we read earlier)
+       if echo "${WAVE_PLANS}" | grep -q "plan-${plan_num}"; then
+         COMPLETED_PLANS_IN_WAVE="${COMPLETED_PLANS_IN_WAVE} ${plan_num}"
+       fi
+     done
+     ```
+
+     Check github.enabled and issueMode:
+     ```bash
+     GITHUB_ENABLED=$(cat .planning/config.json 2>/dev/null | grep -o '"enabled"[[:space:]]*:[[:space:]]*[^,}]*' | grep -o 'true\|false' || echo "false")
+     ISSUE_MODE=$(cat .planning/config.json 2>/dev/null | grep -o '"issueMode"[[:space:]]*:[[:space:]]*"[^"]*"' | grep -o '"[^"]*"$' | tr -d '"' || echo "never")
+     ```
+
+     **If `GITHUB_ENABLED != true` OR `ISSUE_MODE = never`:** Skip GitHub update.
+
+     **Otherwise:**
+
+     1. Find phase issue number:
+     ```bash
+     VERSION=$(grep -oE 'v[0-9]+\.[0-9]+(\.[0-9]+)?' .planning/ROADMAP.md | head -1 | tr -d 'v')
+     ISSUE_NUMBER=$(gh issue list \
+       --label "phase" \
+       --milestone "v${VERSION}" \
+       --json number,title \
+       --jq ".[] | select(.title | startswith(\"Phase ${PHASE}:\")) | .number" \
+       2>/dev/null)
+     ```
+
+     If issue not found: Warn and skip (non-blocking).
+
+     2. Read current issue body:
+     ```bash
+     ISSUE_BODY=$(gh issue view "$ISSUE_NUMBER" --json body --jq '.body' 2>/dev/null)
+     ```
+
+     3. For each completed plan in this wave, update checkbox:
+     ```bash
+     for plan_num in ${COMPLETED_PLANS_IN_WAVE}; do
+       # Format: Plan 01, Plan 02, etc.
+       PLAN_ID="Plan $(printf "%02d" $plan_num):"
+       # Update checkbox: - [ ] -> - [x]
+       ISSUE_BODY=$(echo "$ISSUE_BODY" | sed "s/^- \[ \] ${PLAN_ID}/- [x] ${PLAN_ID}/")
+     done
+     ```
+
+     4. Write and update:
+     ```bash
+     printf '%s\n' "$ISSUE_BODY" > /tmp/phase-issue-body.md
+     gh issue edit "$ISSUE_NUMBER" --body-file /tmp/phase-issue-body.md 2>/dev/null \
+       && echo "Updated issue #${ISSUE_NUMBER}: checked off Wave ${WAVE_NUM} plans" \
+       || echo "Warning: Failed to update issue #${ISSUE_NUMBER}"
+     ```
+
+     This update happens ONCE per wave (after all plans in wave complete), not per-plan, avoiding race conditions.
+
+   - **Open Draft PR (first wave only, pr_workflow only):**
+
+     After first wave completion:
+     ```bash
+     if [ "$PR_WORKFLOW" = "true" ] && [ "$WAVE_NUM" = "1" ]; then
+       # Check if PR already exists (re-run protection)
+       EXISTING_PR=$(gh pr list --head "$BRANCH" --json number --jq '.[0].number' 2>/dev/null)
+       if [ -n "$EXISTING_PR" ]; then
+         echo "PR #${EXISTING_PR} already exists, skipping creation"
+         PR_NUMBER="$EXISTING_PR"
+       else
+         # Push branch and create draft PR
+         git push -u origin "$BRANCH"
+
+         # Get phase name from ROADMAP.md
+         PHASE_NAME=$(grep -E "^Phase ${PHASE_NUM}:" .planning/ROADMAP.md | sed -E 's/^Phase [0-9]+: //' | cut -d'—' -f1 | xargs)
+
+         # Build PR body
+         PHASE_GOAL=$(grep -A 2 "^Phase ${PHASE_NUM}:" .planning/ROADMAP.md | grep "Goal:" | sed 's/.*Goal: //')
+
+         # Get phase issue number for linking (if github.enabled)
+         CLOSES_LINE=""
+         if [ "$GITHUB_ENABLED" = "true" ] && [ "$ISSUE_MODE" != "never" ]; then
+           PHASE_ISSUE=$(gh issue list --label phase --milestone "v${MILESTONE}" \
+             --json number,title --jq ".[] | select(.title | startswith(\"Phase ${PHASE_NUM}:\")) | .number" 2>/dev/null)
+           [ -n "$PHASE_ISSUE" ] && CLOSES_LINE="Closes #${PHASE_ISSUE}"
+         fi
+
+         # Build plans checklist (all unchecked initially)
+         PLANS_CHECKLIST=""
+         for plan in ${PHASE_DIR}/*-PLAN.md; do
+           plan_name=$(grep -m1 "<name>" "$plan" | sed 's/.*<name>//;s/<\/name>.*//' || basename "$plan" | sed 's/-PLAN.md//')
+           plan_num=$(basename "$plan" | sed -E 's/^[0-9]+-([0-9]+)-PLAN\.md$/\1/')
+           PLANS_CHECKLIST="${PLANS_CHECKLIST}- [ ] Plan ${plan_num}: ${plan_name}\n"
+         done
+
+         cat > /tmp/pr-body.md << PR_EOF
+## Phase Goal
+
+${PHASE_GOAL}
+
+## Plans
+
+${PLANS_CHECKLIST}
+${CLOSES_LINE}
+PR_EOF
+
+         # Create draft PR
+         gh pr create --draft \
+           --base main \
+           --title "v${MILESTONE} Phase ${PHASE_NUM}: ${PHASE_NAME}" \
+           --body-file /tmp/pr-body.md
+
+         PR_NUMBER=$(gh pr list --head "$BRANCH" --json number --jq '.[0].number')
+         echo "Created draft PR #${PR_NUMBER}"
+       fi
+     fi
+     ```
+
+     Store PR_NUMBER for step 10.5.
+
+     **Note:** PR body checklist items remain unchecked throughout execution. The PR body is static after creation — it does NOT update as plans complete. The GitHub issue (updated after each wave above) is the source of truth for plan progress during execution.
+
    - Proceed to next wave
 
 5. **Aggregate results**
@@ -129,6 +304,63 @@ Phase: $ARGUMENTS
     - Stage REQUIREMENTS.md if updated: `git add .planning/REQUIREMENTS.md`
     - Commit: `docs({phase}): complete {phase-name} phase`
 
+10.25. **Review Documentation (Non-blocking, pr_workflow only)**
+
+    If PR_WORKFLOW=true, before marking PR ready, offer README review:
+
+    Use AskUserQuestion:
+    - header: "README Review"
+    - question: "This phase may have added user-facing features. Review README before marking PR ready?"
+    - options:
+      - "Yes, I'll update README" — Pause for user edits, wait for "continue"
+      - "Skip" — Proceed to mark PR ready
+      - "Show README" — Display current README, then ask if updates needed
+
+    **If user chooses "Yes, I'll update README":**
+    ```
+    Update README.md with any documentation for this phase's features.
+    Say "continue" when ready to mark the PR ready.
+    ```
+
+    **If user chooses "Show README":**
+    Display README.md content, then use AskUserQuestion:
+    - header: "README Updates"
+    - question: "Does the README need updates for this phase?"
+    - options:
+      - "Yes, I'll update now" — Pause for user edits, wait for "continue"
+      - "No, looks good" — Proceed to mark PR ready
+
+    After README updates (if any), stage and commit:
+    ```bash
+    # Only if README was modified
+    if git diff --quiet README.md; then
+      echo "No README changes"
+    else
+      git add README.md
+      git commit -m "docs({phase}): update README for phase features"
+    fi
+    ```
+
+    *Non-blocking: phase completion continues regardless of choice.*
+
+10.5. **Mark PR Ready (pr_workflow only)**
+
+    After phase completion commit:
+    ```bash
+    if [ "$PR_WORKFLOW" = "true" ]; then
+      # Push final commits
+      git push origin "$BRANCH"
+
+      # Mark PR ready for review
+      gh pr ready
+
+      PR_URL=$(gh pr view --json url --jq '.url')
+      echo "PR marked ready: $PR_URL"
+    fi
+    ```
+
+    Store PR_URL for offer_next output.
+
 11. **Offer next steps**
     - Route to next action (see `<offer_next>`)
 </process>
@@ -155,6 +387,8 @@ Output this markdown directly (not as a code block). Route based on status:
 
 {Y} plans executed
 Goal verified ✓
+{If github.enabled: GitHub Issue: #{issue_number} ({checked}/{total} plans checked off)}
+{If pr_workflow: PR: #{pr_number} ({pr_url}) — ready for review}
 
 ───────────────────────────────────────────────────────────────
 
@@ -186,6 +420,7 @@ Goal verified ✓
 
 {N} phases completed
 All phase goals verified ✓
+{If pr_workflow: Phase PRs ready — merge to prepare for release}
 
 ───────────────────────────────────────────────────────────────
 
@@ -335,5 +570,6 @@ After all plans in phase complete (step 7):
 - [ ] STATE.md reflects phase completion
 - [ ] ROADMAP.md updated
 - [ ] REQUIREMENTS.md updated (phase requirements marked Complete)
+- [ ] GitHub issue checkboxes updated per wave (if github.enabled)
 - [ ] User informed of next steps
 </success_criteria>
