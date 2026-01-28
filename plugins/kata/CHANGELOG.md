@@ -2,6 +2,51 @@
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-01-27 — Release Process Automation
+
+Kata v1.2.0 automates the release pipeline: CI now creates GitHub Releases with tags automatically.
+
+### Added
+- **Automated GitHub Releases**: CI workflow creates GitHub Releases with tags on version change
+- **Changelog extraction**: Release notes automatically extracted from CHANGELOG.md
+
+### Changed
+- **Release skill updated**: `releasing-kata` reflects plugin-only distribution (NPM deprecated)
+- **CI permissions**: `plugin-release.yml` now has `contents: write` for release creation
+
+### Removed
+- **NPM references**: Removed all NPM publishing references from release documentation
+- **Outdated troubleshooting**: Removed NPM-specific troubleshooting sections
+- **Deprecated NPX smoke tests**: Removed NPX install tests from smoke.test.js (NPX deprecated in v1.1.0)
+
+---
+
+## [1.1.0] - 2026-01-27 — GitHub Integration
+
+Kata v1.1.0 ships **GitHub Integration**: config-driven GitHub Milestone, Issue, and PR workflows.
+
+### Added
+- **GitHub config namespace**: `.planning/config.json` now includes `github.enabled` and `github.issueMode` settings
+- **GitHub Milestone creation**: `/kata:adding-milestones` creates GitHub Milestones via `gh api`
+- **Phase issue creation**: Phases become GitHub Issues with `phase` label, assigned to milestone
+- **Plan checklist sync**: Plans shown as checklist items in phase issues, checked as plans complete
+- **PR integration**: `/kata:executing-phases` creates branches, draft PRs with "Closes #X" linking, marks ready on completion
+- **PR status display**: `/kata:tracking-progress` shows PR status (Draft/Ready/Merged)
+- **PR review workflow**: `/kata:review-pr` command with 6 specialized review agents
+- **Test harness**: 27 skill tests with affected-test detection and CI/CD integration
+
+### Changed
+- **Plugin-only distribution**: NPX support deprecated; install via Claude Code plugin marketplace
+- **Skill directory naming**: Renamed from `kata-*` to `*` (27 skills)
+- **Build system simplified**: NPM target removed, plugin build retained
+
+### Removed
+- **NPX distribution path**: `bin/install.js` now shows deprecation message
+- **Update skill**: Removed `kata-updating` (plugin updates via marketplace)
+- **NPX hooks**: Removed `kata-check-update.js`, `kata-npm-statusline.js`
+
+---
+
 ## [1.1.15] - 2026-01-25
 
 ### Fixed
@@ -13,7 +58,7 @@
 ## [1.1.14] - 2026-01-25
 
 ### Fixed
-- **Plugin Skill() invocation**: Build system now transforms `Skill("kata:xxx")` to `Skill("kata:xxx")` for plugin distribution. Commands calling skills failed with "Unknown skill" because skill directories are renamed (`kata-xxx` → `xxx`) but Skill() calls weren't being transformed to match the plugin namespace.
+- **Plugin Skill() invocation**: Build system now transforms `Skill("kata-xxx")` to `Skill("kata:xxx")` for plugin distribution. Commands calling skills failed with "Unknown skill" because skill directories are renamed (`kata-xxx` → `xxx`) but Skill() calls weren't being transformed to match the plugin namespace.
 
 ## [1.1.10] - 2026-01-25
 
