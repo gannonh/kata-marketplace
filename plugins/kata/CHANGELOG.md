@@ -2,13 +2,39 @@
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-02-03 — Issue Execution
+
+Kata v1.4.1 completes the **issue lifecycle**: execution workflows, PR integration with auto-closure, roadmap integration, and plan-phase issue context wiring.
+
+### Added
+- **Issue execution workflow**: "Work on it now" offers mode selection (quick task vs planned) with full PR lifecycle
+- **Quick task issue execution**: Creates plan, executes with commits, creates PR with `Closes #X` for source issue
+- **Planned execution routing**: Links issues to new or existing phases for structured execution
+- **Issue → milestone integration**: Pull backlog issues into milestone scope via `/kata:kata-add-milestone`
+- **Issue → phase integration**: Pull issues into phases as tasks/plans with source issue traceability
+- **Source issue in plans**: `source_issue` frontmatter in PLAN.md files for traceability from issue to execution
+- **Plan-phase issue context**: plan-phase reads STATE.md issue sections and passes context to kata-planner
+- **Multi-issue PR closure**: Milestone completion PRs include `Closes #X` for all phase issues in the milestone
+- **Repo creation prompt**: When GitHub enabled but no remote, offer to create repository during `/kata:kata-new-project`
+
+### Changed
+- All skill names prefixed with `kata-` for consistent namespacing (`add-issue` → `kata-add-issue`)
+- Skill descriptions reduced — removed filler phrases for cleaner autonomous matching
+- Execute-phase reads `source_issue` from PLAN.md frontmatter for PR body `Closes #X`
+
+### Fixed
+- Variable expansion in heredoc for PR body generation
+- Private repository set as default option in new-project skill
+
+---
+
 ## [1.4.0] - 2026-02-01 — GitHub Issue Sync
 
 Kata v1.4.0 ships **GitHub Issue Sync**: bidirectional GitHub Issue integration with automatic labeling, assignment, and lifecycle management.
 
 ### Added
-- **GitHub Issue creation**: Issues created via `/kata:add-issue` automatically sync to GitHub with `backlog` label
-- **GitHub Issue pull**: `/kata:check-issues` pulls existing GitHub Issues with `backlog` label for selection
+- **GitHub Issue creation**: Issues created via `/kata:kata-add-issue` automatically sync to GitHub with `backlog` label
+- **GitHub Issue pull**: `/kata:kata-check-issues` pulls existing GitHub Issues with `backlog` label for selection
 - **Execution linking**: Kata execution can reference and auto-close GitHub Issues on completion
 - **In-progress label sync**: When starting work, adds `in-progress` label and removes `backlog`
 - **Self-assignment**: When starting work on GitHub-linked issue, auto-assigns to `@me`
@@ -29,11 +55,11 @@ Kata v1.4.0 ships **GitHub Issue Sync**: bidirectional GitHub Issue integration 
 **Issue Model Foundation** — Kata now uses "issues" vocabulary consistently:
 - Renamed all references from "todos" to "issues" throughout skills and UI
 - Migrated storage from `.planning/todos/` to `.planning/issues/` with auto-archive
-- `/kata:add-issue` and `/kata:check-issues` replace todo equivalents
+- `/kata:kata-add-issue` and `/kata:kata-check-issues` replace todo equivalents
 
 **Skills-First Architecture** — Simplified invocation layer:
 - Removed commands wrapper layer (29 files deleted)
-- Skills are now directly user-invocable via `/kata:skill-name`
+- Skills are now directly user-invocable via `/kata:kata-skill-name`
 - Cleaner skill names: `help`, `add-issue`, `execute-phase` (not gerund style)
 
 ### Changed
@@ -95,7 +121,7 @@ Kata v1.3.3 ships **Internal Documentation**: workflow diagrams, terminology glo
 Kata v1.3.0 integrates release workflow into milestone completion: version detection, changelog generation, and GitHub Release creation.
 
 ### Added
-- **Release workflow in milestone completion**: `/kata:completing-milestones` now offers release workflow before verification
+- **Release workflow in milestone completion**: `/kata:kata-completing-milestones` now offers release workflow before verification
 - **Version detection reference**: `version-detector.md` with semantic version detection from conventional commits
 - **Changelog generation reference**: `changelog-generator.md` with Keep a Changelog format and commit-to-section mapping
 - **Dry-run mode**: Preview version bump and changelog without applying changes
@@ -156,12 +182,12 @@ Kata v1.1.0 ships **GitHub Integration**: config-driven GitHub Milestone, Issue,
 
 ### Added
 - **GitHub config namespace**: `.planning/config.json` now includes `github.enabled` and `github.issueMode` settings
-- **GitHub Milestone creation**: `/kata:adding-milestones` creates GitHub Milestones via `gh api`
+- **GitHub Milestone creation**: `/kata:kata-adding-milestones` creates GitHub Milestones via `gh api`
 - **Phase issue creation**: Phases become GitHub Issues with `phase` label, assigned to milestone
 - **Plan checklist sync**: Plans shown as checklist items in phase issues, checked as plans complete
-- **PR integration**: `/kata:executing-phases` creates branches, draft PRs with "Closes #X" linking, marks ready on completion
-- **PR status display**: `/kata:tracking-progress` shows PR status (Draft/Ready/Merged)
-- **PR review workflow**: `/kata:review-pr` command with 6 specialized review agents
+- **PR integration**: `/kata:kata-executing-phases` creates branches, draft PRs with "Closes #X" linking, marks ready on completion
+- **PR status display**: `/kata:kata-tracking-progress` shows PR status (Draft/Ready/Merged)
+- **PR review workflow**: `/kata:kata-review-pr` command with 6 specialized review agents
 - **Test harness**: 27 skill tests with affected-test detection and CI/CD integration
 
 ### Changed
@@ -289,7 +315,7 @@ Kata 1.0 ships with **Claude Code plugin support** as the recommended installati
 
 ### Changed
 - **Plugin install is now recommended**: Getting Started section leads with marketplace install, NPM moved to collapsible alternative
-- **Command namespace**: All commands now use `kata:` prefix (e.g., `/kata:providing-help`, `/kata:planning-phases`)
+- **Command namespace**: All commands now use `kata:` prefix (e.g., `/kata:kata-providing-help`, `/kata:kata-planning-phases`)
 - **Hook scripts converted to ES modules**: All hooks now use ESM syntax
 - **Staying Updated section**: Split into separate commands for plugin and NPM users
 
@@ -379,7 +405,11 @@ Kata 1.0 ships with **Claude Code plugin support** as the recommended installati
 - Upstream remote and sync workflow
 - References to original project maintainer
 
-[Unreleased]: https://github.com/gannonh/kata/compare/v1.3.3...HEAD
+[Unreleased]: https://github.com/gannonh/kata/compare/v1.4.1...HEAD
+[1.4.1]: https://github.com/gannonh/kata/compare/v1.4.0...v1.4.1
+[1.4.0]: https://github.com/gannonh/kata/compare/v1.3.5...v1.4.0
+[1.3.5]: https://github.com/gannonh/kata/compare/v1.3.4...v1.3.5
+[1.3.4]: https://github.com/gannonh/kata/compare/v1.3.3...v1.3.4
 [1.3.3]: https://github.com/gannonh/kata/compare/v1.3.2...v1.3.3
 [1.3.2]: https://github.com/gannonh/kata/compare/v1.3.1...v1.3.2
 [1.3.1]: https://github.com/gannonh/kata/compare/v1.3.0...v1.3.1
