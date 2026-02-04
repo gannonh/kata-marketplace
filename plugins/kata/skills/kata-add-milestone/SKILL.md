@@ -484,7 +484,7 @@ Files: `.planning/research/`
 
 **Check for backlog issues:**
 ```bash
-BACKLOG_COUNT=$(ls .planning/issues/open/*.md 2>/dev/null | wc -l | tr -d ' ')
+BACKLOG_COUNT=$(find .planning/issues/open -maxdepth 1 -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
 ```
 
 **If BACKLOG_COUNT > 0:**
@@ -705,8 +705,7 @@ Display stage banner:
 
 **Determine starting phase number:**
 
-Read MILESTONES.md to find the last phase number from previous milestone.
-New phases continue from there (e.g., if v1.0 ended at phase 5, v1.1 starts at phase 6).
+Start phase numbering at 1 (each milestone has independent numbering).
 
 Spawn kata-roadmapper agent with context:
 
@@ -726,23 +725,41 @@ Task(prompt="
 **Config:**
 @.planning/config.json
 
-**Previous milestone (for phase numbering):**
+**Previous milestones (shipped context):**
 @.planning/MILESTONES.md
 
 </planning_context>
 
 <instructions>
 Create roadmap for milestone v[X.Y]:
-1. Start phase numbering from [N] (continues from previous milestone)
+1. Start phase numbering at 1 (each milestone has independent numbering)
 2. Derive phases from THIS MILESTONE's requirements (don't include validated/existing)
 3. Map every requirement to exactly one phase
 4. Derive 2-5 success criteria per phase (observable user behaviors)
 5. Validate 100% coverage of new requirements
 6. Write files immediately (ROADMAP.md, STATE.md, update REQUIREMENTS.md traceability)
-7. Return ROADMAP CREATED with summary
+7. Include "Planned Milestones" section in ROADMAP.md if user mentioned future milestone ideas
+8. Use ○ symbol for planned milestones in overview, 🔄 for current, ✅ for completed
+9. Include planned milestones in Progress Summary table with "Planned" status
+10. Return ROADMAP CREATED with summary
 
 Write files first, then return. This ensures artifacts persist even if context is lost.
 </instructions>
+
+<format_conventions>
+Milestones overview uses these symbols:
+- ✅ for shipped milestones
+- 🔄 for current/in-progress milestone
+- ○ for planned milestones
+
+Completed milestone details blocks MUST include:
+- Summary line: ✅ v[X.Y] [Name] — SHIPPED [DATE]
+- **Goal:** line
+- Phase checkboxes with plan counts and dates
+- [Full archive](milestones/v[X.Y]-ROADMAP.md) link
+
+Progress Summary table includes planned milestones with "Planned" status and "—" for metrics.
+</format_conventions>
 ", subagent_type="kata:kata-roadmapper", model="{roadmapper_model}", description="Create roadmap")
 ```
 
@@ -1055,7 +1072,7 @@ Present completion with next steps:
 - [ ] kata-roadmapper spawned with phase numbering context
 - [ ] Roadmap files written immediately (not draft)
 - [ ] User feedback incorporated (if any)
-- [ ] ROADMAP.md created with phases continuing from previous milestone
+- [ ] ROADMAP.md created with phases starting at 1 (per-milestone numbering)
 - [ ] All commits made (if planning docs committed)
 - [ ] User knows next step is `/kata:kata-discuss-phase [N]`
 

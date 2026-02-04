@@ -185,9 +185,7 @@ Track coverage as you go.
 - Created via `/kata:kata-insert-phase`
 - Execute between integers: 1 → 1.1 → 1.2 → 2
 
-**Starting number:**
-- New milestone: Start at 1
-- Continuing milestone: Check existing phases, start at last + 1
+**Starting number:** Always start at 1 (each milestone has independent phase numbering)
 
 ## Depth Calibration
 
@@ -290,8 +288,11 @@ Use the standard ROADMAP.md format (see examples in existing projects).
 
 Key sections:
 - Overview (2-3 sentences)
-- Phases with Goal, Dependencies, Requirements, Success Criteria
-- Progress table
+- Milestones overview (✅ shipped, 🔄 current, ○ planned)
+- Completed Milestones (collapsed `<details>` with Goal, phase list, archive link)
+- Planned Milestones (future work with Goal and Target features)
+- Current Milestone with Phases (Goal, Dependencies, Requirements, Success Criteria)
+- Progress Summary table (includes planned milestones with "Planned" status)
 
 ## STATE.md Structure
 

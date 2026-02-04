@@ -9,6 +9,7 @@ This template is used by the milestone-complete workflow to create archive files
 # Milestone v{{VERSION}}: {{MILESTONE_NAME}}
 
 **Status:** ✅ SHIPPED {{DATE}}
+**Goal:** {{MILESTONE_GOAL}}
 **Phases:** {{PHASE_START}}-{{PHASE_END}}
 **Total Plans:** {{TOTAL_PLANS}}
 
@@ -119,5 +120,5 @@ _For current project status, see .planning/ROADMAP.md_
 
 - Update ROADMAP.md to collapse completed milestone in `<details>` tag
 - Update PROJECT.md to brownfield format with Current State section
-- Continue phase numbering in next milestone (never restart at 01)
+- Each milestone starts phase numbering at 1
   </guidelines>

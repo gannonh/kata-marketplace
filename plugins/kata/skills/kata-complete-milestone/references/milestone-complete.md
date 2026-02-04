@@ -103,7 +103,16 @@ Check if milestone is truly complete:
 
 ```bash
 cat .planning/ROADMAP.md
-ls .planning/phases/*/SUMMARY.md 2>/dev/null | wc -l
+# Count phase summaries across state subdirectories
+SUMMARY_COUNT=0
+for state in active pending completed; do
+  COUNT=$(find ".planning/phases/${state}" -maxdepth 2 -name "SUMMARY.md" 2>/dev/null | wc -l)
+  SUMMARY_COUNT=$((SUMMARY_COUNT + COUNT))
+done
+# Fallback: flat directories
+FLAT_COUNT=$(find .planning/phases -maxdepth 2 -name "SUMMARY.md" -path "*/[0-9]*/*" 2>/dev/null | wc -l)
+[ "$SUMMARY_COUNT" -eq 0 ] && SUMMARY_COUNT=$FLAT_COUNT
+echo "$SUMMARY_COUNT phase summaries found"
 ```
 
 **Questions to ask:**
@@ -370,9 +379,18 @@ Milestone Stats:
 Read all phase SUMMARY.md files in milestone range:
 
 ```bash
-cat .planning/phases/01-*/01-*-SUMMARY.md
-cat .planning/phases/02-*/02-*-SUMMARY.md
-# ... for each phase in milestone
+# Read phase summaries across state subdirectories
+for state in active pending completed; do
+  for phase_dir in .planning/phases/${state}/*/; do
+    [ -d "$phase_dir" ] || continue
+    cat "${phase_dir}"*-SUMMARY.md 2>/dev/null
+  done
+done
+# Fallback: flat directories
+for phase_dir in .planning/phases/[0-9]*/; do
+  [ -d "$phase_dir" ] || continue
+  cat "${phase_dir}"*-SUMMARY.md 2>/dev/null
+done
 ```
 
 From summaries, extract 4-6 key accomplishments.
@@ -448,7 +466,12 @@ Perform full PROJECT.md evolution review at milestone completion.
 **Read all phase summaries in this milestone:**
 
 ```bash
-cat .planning/phases/*-*/*-SUMMARY.md
+# Read all phase summaries across state subdirectories
+for state in active pending completed; do
+  cat .planning/phases/${state}/*-*/*-SUMMARY.md 2>/dev/null
+done
+# Fallback: flat directories
+cat .planning/phases/[0-9]*-*/*-SUMMARY.md 2>/dev/null
 ```
 
 **Full review checklist:**
@@ -597,22 +620,35 @@ Add milestone headers and collapse completed work:
 ## Milestones
 
 - ✅ **v1.0 MVP** — Phases 1-4 (shipped YYYY-MM-DD)
-- 🚧 **v1.1 Security** — Phases 5-6 (in progress)
-- 📋 **v2.0 Redesign** — Phases 7-10 (planned)
+- 🔄 **v1.1 Security** — Phases 5-6 (in progress)
+- ○ **v2.0 Redesign** — planned
 
 ## Phases
 
 <details>
 <summary>✅ v1.0 MVP (Phases 1-4) — SHIPPED YYYY-MM-DD</summary>
 
+**Goal:** [One sentence milestone goal]
+
 - [x] Phase 1: Foundation (2/2 plans) — completed YYYY-MM-DD
 - [x] Phase 2: Authentication (2/2 plans) — completed YYYY-MM-DD
 - [x] Phase 3: Core Features (3/3 plans) — completed YYYY-MM-DD
 - [x] Phase 4: Polish (1/1 plan) — completed YYYY-MM-DD
 
+[Full archive](milestones/v1.0-ROADMAP.md)
+
 </details>
 
-### 🚧 v[Next] [Name] (In Progress / Planned)
+## Planned Milestones
+
+### v2.0 Redesign (Planned)
+
+**Goal:** [To be defined when milestone becomes active]
+
+**Target features:**
+- [Feature placeholder]
+
+### 🔄 v[Next] [Name] (In Progress / Planned)
 
 - [ ] Phase 5: [Name] ([N] plans)
 - [ ] Phase 6: [Name] ([N] plans)
@@ -681,7 +717,7 @@ Extract completed milestone details and create archive file.
    ✅ ROADMAP.md deleted (fresh one for next milestone)
    ```
 
-**Note:** Phase directories (`.planning/phases/`) are NOT deleted. They accumulate across milestones as the raw execution history. Phase numbering continues (v1.0 phases 1-4, v1.1 phases 5-8, etc.).
+**Note:** Phase directories (`.planning/phases/`) are NOT deleted. They accumulate across milestones as the raw execution history. Each milestone starts phase numbering at 1 (independent numbering per milestone).
 
 </step>
 
