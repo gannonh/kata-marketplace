@@ -3,17 +3,8 @@ name: kata-audit-milestone
 description: Verify milestone achievement against its definition of done, checking requirements coverage, cross-phase integration, and end-to-end flows. Triggers include "audit milestone", "verify milestone", "check milestone", and "milestone audit". This skill reads existing phase verification files, aggregates technical debt and gaps, and spawns an integration checker for cross-phase wiring.
 metadata:
   version: "0.1.0"
-user-invocable: true
-disable-model-invocation: false
-allowed-tools:
-  - Read
-  - Glob
-  - Grep
-  - Bash
-  - Task
-  - Write
+allowed-tools: Read Glob Grep Bash Task Write
 ---
-
 <objective>
 Verify milestone achieved its definition of done. Check requirements coverage, cross-phase integration, and end-to-end flows.
 
@@ -103,18 +94,28 @@ If a phase is missing VERIFICATION.md, flag it as "unverified phase" — this is
 
 ## 3. Spawn Integration Checker
 
+Read the integration checker instructions:
+
+```
+integration_checker_instructions_content = Read("skills/kata-audit-milestone/references/integration-checker-instructions.md")
+```
+
 With phase context collected:
 
 ```
 Task(
-  prompt="Check cross-phase integration and E2E flows.
+  prompt="<agent-instructions>
+{integration_checker_instructions_content}
+</agent-instructions>
+
+Check cross-phase integration and E2E flows.
 
 Phases: {phase_dirs}
 Phase exports: {from SUMMARYs}
 API routes: {routes created}
 
 Verify cross-phase wiring and E2E user flows.",
-  subagent_type="kata:kata-integration-checker",
+  subagent_type="general-purpose",
   model="{integration_checker_model}"
 )
 ```

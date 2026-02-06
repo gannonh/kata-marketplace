@@ -3,14 +3,8 @@ name: kata-research-phase
 description: Research how to implement a phase standalone, investigating implementation approaches before planning, or re-researching after planning is complete. Triggers include "research phase", "investigate phase", "how to implement", "research implementation", and "phase research".
 metadata:
   version: "0.1.0"
-user-invocable: true
-disable-model-invocation: false
-allowed-tools:
-  - Read
-  - Write
-  - Bash
+allowed-tools: Read Write Bash
 ---
-
 <objective>
 Research how to implement a phase. Spawns kata-phase-researcher agent with phase context.
 
@@ -104,6 +98,14 @@ grep -A30 "### Decisions Made" .planning/STATE.md 2>/dev/null
 
 Present summary with phase description, requirements, prior decisions.
 
+## 3.5. Load Phase-Researcher Instructions
+
+Read the phase-researcher agent instructions for inlining into Task() calls:
+
+```bash
+phase_researcher_instructions_content=$(cat references/phase-researcher-instructions.md)
+```
+
 ## 4. Spawn kata-phase-researcher Agent
 
 Research modes: ecosystem (default), feasibility, implementation, comparison.
@@ -165,8 +167,8 @@ Write to: ${PHASE_DIR}/${PHASE}-RESEARCH.md
 
 ```
 Task(
-  prompt=filled_prompt,
-  subagent_type="kata:kata-phase-researcher",
+  prompt="<agent-instructions>\n{phase_researcher_instructions_content}\n</agent-instructions>\n\n" + filled_prompt,
+  subagent_type="general-purpose",
   model="{researcher_model}",
   description="Research Phase {phase}"
 )
@@ -199,8 +201,8 @@ Research file: @${PHASE_DIR}/${PHASE}-RESEARCH.md
 
 ```
 Task(
-  prompt=continuation_prompt,
-  subagent_type="kata:kata-phase-researcher",
+  prompt="<agent-instructions>\n{phase_researcher_instructions_content}\n</agent-instructions>\n\n" + continuation_prompt,
+  subagent_type="general-purpose",
   model="{researcher_model}",
   description="Continue research Phase {phase}"
 )

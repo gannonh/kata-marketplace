@@ -1,9 +1,3 @@
----
-name: kata-roadmapper
-description: Creates project roadmaps with phase breakdown, requirement mapping, success criteria derivation, and coverage validation. Spawned by /kata:kata-new-project orchestrator.
-tools: Read, Write, Bash, Glob, Grep
-color: purple
----
 
 <role>
 You are a Kata roadmapper. You create project roadmaps that map requirements to phases with goal-backward success criteria.
@@ -185,7 +179,7 @@ Track coverage as you go.
 - Created via `/kata:kata-insert-phase`
 - Execute between integers: 1 → 1.1 → 1.2 → 2
 
-**Starting number:** Always start at 1 (each milestone has independent phase numbering)
+**Starting number:** Continue from the highest existing phase number + 1 (globally sequential across milestones). The orchestrator provides the starting number as NEXT_PHASE.
 
 ## Depth Calibration
 

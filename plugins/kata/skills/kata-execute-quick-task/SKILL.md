@@ -3,14 +3,8 @@ name: kata-execute-quick-task
 description: Execute small ad-hoc tasks with Kata guarantees, running quick tasks without full planning, or handling one-off work outside the roadmap. Triggers include "quick task", "quick mode", "quick fix", "ad-hoc task", "small task", and "one-off task".
 metadata:
   version: "0.1.0"
-user-invocable: true
-disable-model-invocation: false
-allowed-tools:
-  - Read
-  - Write
-  - Bash
+allowed-tools: Read Write Bash
 ---
-
 <objective>
 Execute small, ad-hoc tasks with Kata guarantees (atomic commits, STATE.md tracking) while skipping optional agents (research, plan-checker, verifier).
 
@@ -184,8 +178,10 @@ Store `$QUICK_DIR` for use in orchestration.
 
 Read files before spawning agents using the Read tool. The `@` syntax does not work across Task() boundaries - content must be inlined.
 
-**Read this file:**
-- `.planning/STATE.md` (required)
+**Read these files:**
+- `.planning/STATE.md` (required) — store as `STATE_CONTENT`
+- `skills/kata-plan-phase/references/planner-instructions.md` (cross-skill reference) — store as `planner_instructions_content`
+- `skills/kata-execute-phase/references/executor-instructions.md` (cross-skill reference) — store as `executor_instructions_content`
 
 Store content for use in Task prompts below.
 
@@ -197,8 +193,8 @@ Spawn kata-planner with quick mode context:
 
 ```
 Task(
-  prompt="
-<planning_context>
+  prompt="<agent-instructions>\n{planner_instructions_content}\n</agent-instructions>\n\n" +
+"<planning_context>
 
 **Mode:** quick
 **Directory:** ${QUICK_DIR}
@@ -228,7 +224,7 @@ Write plan to: ${QUICK_DIR}/${next_num}-PLAN.md
 Return: ## PLANNING COMPLETE with plan path
 </output>
 ",
-  subagent_type="kata:kata-planner",
+  subagent_type="general-purpose",
   model="{planner_model}",
   description="Quick plan: ${DESCRIPTION}"
 )
@@ -252,8 +248,8 @@ Spawn kata-executor with inlined plan (use the STATE_CONTENT from step 4.5):
 
 ```
 Task(
-  prompt="
-Execute quick task ${next_num}.
+  prompt="<agent-instructions>\n{executor_instructions_content}\n</agent-instructions>\n\n" +
+"Execute quick task ${next_num}.
 
 <plan>
 ${PLAN_CONTENT}
@@ -270,7 +266,7 @@ ${STATE_CONTENT}
 - Do NOT update ROADMAP.md (quick tasks are separate from planned phases)
 </constraints>
 ",
-  subagent_type="kata:kata-executor",
+  subagent_type="general-purpose",
   model="{executor_model}",
   description="Execute: ${DESCRIPTION}"
 )

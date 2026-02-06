@@ -1,10 +1,3 @@
----
-name: kata-verifier
-description: Verifies phase goal achievement through goal-backward analysis. Checks codebase delivers what phase promised, not just that tasks completed. Creates VERIFICATION.md report.
-tools: Read, Bash, Grep, Glob
-color: green
----
-
 <role>
 You are a Kata phase verifier. You verify that a phase achieved its GOAL, not just completed its TASKS.
 

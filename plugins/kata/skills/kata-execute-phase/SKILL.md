@@ -3,14 +3,8 @@ name: kata-execute-phase
 description: Execute all plans in a phase with wave-based parallelization, running phase execution, or completing phase work. Triggers include "execute phase", "run phase", "execute plans", "run the phase", and "phase execution".
 metadata:
   version: "0.1.0"
-user-invocable: true
-disable-model-invocation: false
-allowed-tools:
-  - Read
-  - Write
-  - Bash
+allowed-tools: Read Write Bash
 ---
-
 <objective>
 Execute all plans in a phase using wave-based parallel execution.
 
@@ -47,9 +41,9 @@ Phase: $ARGUMENTS
 
    **Model lookup table:**
 
-   | Agent              | quality | balanced | budget |
-   | ------------------ | ------- | -------- | ------ |
-   | kata-executor      | opus    | sonnet   | sonnet |
+   | Agent                       | quality | balanced | budget |
+   | --------------------------- | ------- | -------- | ------ |
+   | general-purpose (executor)  | opus    | sonnet   | sonnet |
    | kata-verifier      | sonnet  | sonnet   | haiku  |
    | kata-code-reviewer | opus    | sonnet   | sonnet |
    | kata-*-analyzer    | sonnet  | sonnet   | haiku  |
@@ -59,37 +53,18 @@ Phase: $ARGUMENTS
    Store resolved models for use in Task calls below.
 
 1. **Validate phase exists**
-   Find phase directory using universal discovery:
+   Find phase directory using the discovery script:
    ```bash
-   PADDED=$(printf "%02d" "$PHASE_ARG" 2>/dev/null || echo "$PHASE_ARG")
-   PHASE_DIR=""
-   for state in active pending completed; do
-     PHASE_DIR=$(find .planning/phases/${state} -maxdepth 1 -type d -name "${PADDED}-*" 2>/dev/null | head -1)
-     [ -z "$PHASE_DIR" ] && PHASE_DIR=$(find .planning/phases/${state} -maxdepth 1 -type d -name "${PHASE_ARG}-*" 2>/dev/null | head -1)
-     [ -n "$PHASE_DIR" ] && break
-   done
-   # Fallback: flat directory (backward compatibility for unmigrated projects)
-   [ -z "$PHASE_DIR" ] && PHASE_DIR=$(find .planning/phases -maxdepth 1 -type d -name "${PADDED}-*" 2>/dev/null | head -1)
-   [ -z "$PHASE_DIR" ] && PHASE_DIR=$(find .planning/phases -maxdepth 1 -type d -name "${PHASE_ARG}-*" 2>/dev/null | head -1)
-
-   if [ -z "$PHASE_DIR" ]; then
-     echo "ERROR: No phase directory matching '${PHASE_ARG}'"
-     exit 1
-   fi
-
-   PLAN_COUNT=$(find "$PHASE_DIR" -maxdepth 1 -name "*-PLAN.md" 2>/dev/null | wc -l | tr -d ' ')
-   if [ "$PLAN_COUNT" -eq 0 ]; then
-     echo "ERROR: No plans found in $PHASE_DIR"
-     exit 1
-   fi
+   bash "${SKILL_BASE_DIR}/scripts/find-phase.sh" "$PHASE_ARG"
    ```
+   Outputs `PHASE_DIR`, `PLAN_COUNT`, and `PHASE_STATE` as key=value pairs. Exit code 1 = not found, 2 = no plans. Parse the output to set these variables for subsequent steps.
 
 1.25. **Move phase to active (state transition)**
 
    ```bash
    # Move from pending to active when execution begins
-   CURRENT_STATE=$(echo "$PHASE_DIR" | grep -oE '(pending|active|completed)' | head -1)
-   if [ "$CURRENT_STATE" = "pending" ]; then
+   # PHASE_STATE is from find-phase.sh output (step 1)
+   if [ "$PHASE_STATE" = "pending" ]; then
      DIR_NAME=$(basename "$PHASE_DIR")
      mkdir -p ".planning/phases/active"
      mv "$PHASE_DIR" ".planning/phases/active/${DIR_NAME}"
@@ -155,11 +130,27 @@ Phase: $ARGUMENTS
 3. **Group by wave**
    - Read `wave` from each plan's frontmatter
    - Group plans by wave number
-   - Report wave structure to user
+
+3.5. **Display execution banner**
+
+   Display stage banner and wave structure:
+
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    Kata ► EXECUTING PHASE {X}: {Phase Name}
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   **{N} plans, {M} waves:**
+
+   | Wave | Plans | Description |
+   |------|-------|-------------|
+   | 1    | 01, 02 | {plan names from frontmatter} |
+   | 2    | 03    | {plan name} |
+
+   **Model profile:** {profile} (executor → {model})
 
 4. **Execute waves**
    For each wave in order:
-   - Spawn `kata-executor` for each plan in wave (parallel Task calls)
+   - Spawn `general-purpose` executor for each plan in wave (parallel Task calls)
    - Wait for completion (Task blocks)
    - Verify SUMMARYs created
    - **Update GitHub issue checkboxes (if enabled):**
@@ -332,7 +323,25 @@ PR_EOF
    git add -u && git commit -m "fix({phase}): orchestrator corrections"
    ```
 
-   **If clean:** Continue to verification.
+   **If clean:** Continue to test suite.
+
+6.5. **Run project test suite**
+
+   Before verification, run the project's test suite to catch regressions early:
+
+   ```bash
+   TEST_SCRIPT=$(cat package.json 2>/dev/null | grep -o '"test"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1)
+   ```
+
+   **If package.json has a test script:**
+   - Run `npm test`
+   - If tests pass: proceed to step 7
+   - If tests fail: report test failures, still proceed to step 7
+
+   **If no test script detected:**
+   - Skip this step, proceed to step 7
+
+   **Skip for gap phases:** If mode is `gap_closure`, skip test suite
 
 7. **Verify phase goal**
    Check config: `WORKFLOW_VERIFIER=$(cat .planning/config.json 2>/dev/null | grep -o '"verifier"[[:space:]]*:[[:space:]]*[^,}]*' | grep -o 'true\|false' || echo "true")`
@@ -664,13 +673,14 @@ Before spawning, read file contents using Read tool. The `@` syntax does not wor
 **Read these files:**
 - Each plan file in the wave (e.g., `{plan_01_path}`, `{plan_02_path}`, etc.)
 - `.planning/STATE.md`
+- `references/executor-instructions.md` (relative to skill base directory) — store as `executor_instructions_content`
 
 Spawn all plans in a wave with a single message containing multiple Task calls, with inlined content:
 
 ```
-Task(prompt="Execute plan at {plan_01_path}\n\n<plan>\n{plan_01_content}\n</plan>\n\n<project_state>\n{state_content}\n</project_state>", subagent_type="kata:kata-executor", model="{executor_model}")
-Task(prompt="Execute plan at {plan_02_path}\n\n<plan>\n{plan_02_content}\n</plan>\n\n<project_state>\n{state_content}\n</project_state>", subagent_type="kata:kata-executor", model="{executor_model}")
-Task(prompt="Execute plan at {plan_03_path}\n\n<plan>\n{plan_03_content}\n</plan>\n\n<project_state>\n{state_content}\n</project_state>", subagent_type="kata:kata-executor", model="{executor_model}")
+Task(prompt="<agent-instructions>\n{executor_instructions_content}\n</agent-instructions>\n\nExecute plan at {plan_01_path}\n\n<plan>\n{plan_01_content}\n</plan>\n\n<project_state>\n{state_content}\n</project_state>", subagent_type="general-purpose", model="{executor_model}")
+Task(prompt="<agent-instructions>\n{executor_instructions_content}\n</agent-instructions>\n\nExecute plan at {plan_02_path}\n\n<plan>\n{plan_02_content}\n</plan>\n\n<project_state>\n{state_content}\n</project_state>", subagent_type="general-purpose", model="{executor_model}")
+Task(prompt="<agent-instructions>\n{executor_instructions_content}\n</agent-instructions>\n\nExecute plan at {plan_03_path}\n\n<plan>\n{plan_03_content}\n</plan>\n\n<project_state>\n{state_content}\n</project_state>", subagent_type="general-purpose", model="{executor_model}")
 ```
 
 All three run in parallel. Task tool blocks until all complete.

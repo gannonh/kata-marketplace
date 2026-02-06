@@ -3,14 +3,8 @@ name: kata-debug
 description: Systematically debug issues, investigating bugs, troubleshooting problems, or tracking down errors with persistent state across context resets. Triggers include "debug", "investigate bug", "troubleshoot", "find the problem", "why isn't this working", and "debug session".
 metadata:
   version: "0.1.0"
-user-invocable: true
-disable-model-invocation: false
-allowed-tools:
-  - Read
-  - Write
-  - Bash
+allowed-tools: Read Write Bash
 ---
-
 <objective>
 Debug issues using scientific method with subagent isolation.
 
@@ -69,7 +63,12 @@ Use AskUserQuestion for each:
 
 After all gathered, confirm ready to investigate.
 
-## 3. Spawn kata-debugger Agent
+## 3. Read Instruction Files
+
+Before spawning agents, read agent instructions using the Read tool:
+- `references/debugger-instructions.md` (relative to skill base directory) — store as `debugger_instructions_content`
+
+## 4. Spawn Debugger Agent
 
 Fill prompt and spawn:
 
@@ -100,14 +99,14 @@ Create: .planning/debug/{slug}.md
 
 ```
 Task(
-  prompt=filled_prompt,
-  subagent_type="kata:kata-debugger",
+  prompt="<agent-instructions>\n{debugger_instructions_content}\n</agent-instructions>\n\n" + filled_prompt,
+  subagent_type="general-purpose",
   model="{debugger_model}",
   description="Debug {slug}"
 )
 ```
 
-## 4. Handle Agent Return
+## 5. Handle Agent Return
 
 **If `## ROOT CAUSE FOUND`:**
 - Display root cause and evidence summary
@@ -128,7 +127,7 @@ Task(
   - "Manual investigation" - done
   - "Add more context" - gather more symptoms, spawn again
 
-## 5. Spawn Continuation Agent (After Checkpoint)
+## 6. Spawn Continuation Agent (After Checkpoint)
 
 When user responds to checkpoint, spawn fresh agent:
 
@@ -153,8 +152,8 @@ goal: find_and_fix
 
 ```
 Task(
-  prompt=continuation_prompt,
-  subagent_type="kata:kata-debugger",
+  prompt="<agent-instructions>\n{debugger_instructions_content}\n</agent-instructions>\n\n" + continuation_prompt,
+  subagent_type="general-purpose",
   model="{debugger_model}",
   description="Continue debug {slug}"
 )

@@ -3,14 +3,8 @@ name: kata-plan-phase
 description: Plan detailed roadmap phases. Triggers include "plan phase n", "create phase plan", "create a plan" "roadmap planning", and "roadmap phase creation".
 metadata:
   version: "0.1.0"
-user-invocable: true
-disable-model-invocation: false
-allowed-tools:
-  - Read
-  - Write
-  - Bash
+allowed-tools: Read Write Bash
 ---
-
 <execution_context>
 @./references/ui-brand.md
 </execution_context>
@@ -105,6 +99,23 @@ if [ -z "$PHASE_DIR" ]; then
   [ -z "$PHASE_DIR" ] && PHASE_DIR=$(find .planning/phases -maxdepth 1 -type d -name "${PHASE}-*" 2>/dev/null | head -1)
 fi
 
+# Collision check: detect duplicate phase numbering that requires migration
+MATCH_COUNT=0
+for state in active pending completed; do
+  MATCH_COUNT=$((MATCH_COUNT + $(find .planning/phases/${state} -maxdepth 1 -type d -name "${PADDED}-*" 2>/dev/null | wc -l)))
+done
+# Include flat fallback matches
+MATCH_COUNT=$((MATCH_COUNT + $(find .planning/phases -maxdepth 1 -type d -name "${PADDED}-*" 2>/dev/null | wc -l)))
+
+if [ "$MATCH_COUNT" -gt 1 ]; then
+  echo "COLLISION: ${MATCH_COUNT} directories match prefix '${PADDED}-*' across phase states."
+  echo "This project uses old per-milestone phase numbering that must be migrated first."
+fi
+```
+
+**If COLLISION detected (MATCH_COUNT > 1):** STOP planning. Invoke `/kata:kata-migrate-phases` to renumber phases to globally sequential numbering. After migration completes, re-invoke `/kata:kata-plan-phase` with the migrated phase number. Do NOT continue with ambiguous phase directories.
+
+```bash
 find "${PHASE_DIR}" -maxdepth 1 -name "*-RESEARCH.md" 2>/dev/null
 find "${PHASE_DIR}" -maxdepth 1 -name "*-PLAN.md" 2>/dev/null
 ```
@@ -230,8 +241,8 @@ Write research findings to: {phase_dir}/{phase}-RESEARCH.md
 
 ```
 Task(
-  prompt=research_prompt,
-  subagent_type="kata:kata-phase-researcher",
+  prompt="<agent-instructions>\n{phase_researcher_instructions_content}\n</agent-instructions>\n\n" + research_prompt,
+  subagent_type="general-purpose",
   model="{researcher_model}",
   description="Research Phase {phase}"
 )
@@ -268,6 +279,9 @@ Read and store context file contents for the planner agent. The `@` syntax does 
 - `${PHASE_DIR}/*-RESEARCH.md` (if exists)
 - `${PHASE_DIR}/*-VERIFICATION.md` (if --gaps mode)
 - `${PHASE_DIR}/*-UAT.md` (if --gaps mode)
+- `references/planner-instructions.md` (relative to skill base directory) — store as `planner_instructions_content`
+- `references/phase-researcher-instructions.md` (relative to skill base directory) — store as `phase_researcher_instructions_content`
+- `references/plan-checker-instructions.md` (relative to skill base directory) — store as `plan_checker_instructions_content`
 
 Store all content for use in the Task prompt below.
 
@@ -398,8 +412,8 @@ Before returning PLANNING COMPLETE:
 
 ```
 Task(
-  prompt=filled_prompt,
-  subagent_type="kata:kata-planner",
+  prompt="<agent-instructions>\n{planner_instructions_content}\n</agent-instructions>\n\n" + filled_prompt,
+  subagent_type="general-purpose",
   model="{planner_model}",
   description="Plan Phase {phase}"
 )
@@ -470,8 +484,8 @@ Return one of:
 
 ```
 Task(
-  prompt=checker_prompt,
-  subagent_type="kata:kata-plan-checker",
+  prompt="<agent-instructions>\n{plan_checker_instructions_content}\n</agent-instructions>\n\n" + checker_prompt,
+  subagent_type="general-purpose",
   model="{checker_model}",
   description="Verify Phase {phase} plans"
 )
@@ -528,8 +542,8 @@ Return what changed.
 
 ```
 Task(
-  prompt=revision_prompt,
-  subagent_type="kata:kata-planner",
+  prompt="<agent-instructions>\n{planner_instructions_content}\n</agent-instructions>\n\n" + revision_prompt,
+  subagent_type="general-purpose",
   model="{planner_model}",
   description="Revise Phase {phase} plans"
 )

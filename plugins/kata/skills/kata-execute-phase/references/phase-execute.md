@@ -24,11 +24,10 @@ Default to "balanced" if not set.
 
 **Model lookup table:**
 
-| Agent           | quality | balanced | budget |
-| --------------- | ------- | -------- | ------ |
-| kata-executor   | opus    | sonnet   | sonnet |
-| kata-verifier   | sonnet  | sonnet   | haiku  |
-| general-purpose | —       | —        | —      |
+| Agent                       | quality | balanced | budget |
+| --------------------------- | ------- | -------- | ------ |
+| general-purpose (executor)  | opus    | sonnet   | sonnet |
+| general-purpose (verifier)  | sonnet  | sonnet   | haiku  |
 
 Store resolved models for use in Task calls below.
 </step>
@@ -83,6 +82,19 @@ done
 if [ -z "$PHASE_DIR" ]; then
   PHASE_DIR=$(find .planning/phases -maxdepth 1 -type d -name "${PADDED}-*" 2>/dev/null | head -1)
   [ -z "$PHASE_DIR" ] && PHASE_DIR=$(find .planning/phases -maxdepth 1 -type d -name "${PHASE_ARG}-*" 2>/dev/null | head -1)
+fi
+
+# Collision detection: check for duplicate phase numbering
+MATCH_COUNT=0
+for state in active pending completed; do
+  MATCH_COUNT=$((MATCH_COUNT + $(find .planning/phases/${state} -maxdepth 1 -type d -name "${PADDED}-*" 2>/dev/null | wc -l)))
+done
+MATCH_COUNT=$((MATCH_COUNT + $(find .planning/phases -maxdepth 1 -type d -name "${PADDED}-*" 2>/dev/null | wc -l)))
+
+if [ "$MATCH_COUNT" -gt 1 ]; then
+  echo "COLLISION: ${MATCH_COUNT} directories match prefix '${PADDED}-*'"
+  echo "Run /kata:kata-migrate-phases to fix duplicate phase numbering before executing."
+  exit 1
 fi
 
 if [ -z "$PHASE_DIR" ]; then
@@ -315,7 +327,7 @@ Plans with `autonomous: false` require user interaction.
 
 1. **Spawn agent for checkpoint plan:**
    ```
-   Task(prompt="{subagent-task-prompt}", subagent_type="kata:kata-executor", model="{executor_model}")
+   Task(prompt="<agent-instructions>\n{executor_instructions_content}\n</agent-instructions>\n\n{subagent-task-prompt}", subagent_type="general-purpose", model="{executor_model}")
    ```
 
 2. **Agent runs until checkpoint:**
@@ -354,7 +366,7 @@ Plans with `autonomous: false` require user interaction.
    ```
    Task(
      prompt=filled_continuation_template,
-     subagent_type="kata:kata-executor",
+     subagent_type="general-purpose",
      model="{executor_model}"
    )
    ```
@@ -417,21 +429,43 @@ After all waves complete, aggregate results:
 ```
 </step>
 
+<step name="run_test_suite">
+Before verification, run the project's test suite to catch regressions early.
+
+```bash
+TEST_SCRIPT=$(cat package.json 2>/dev/null | grep -o '"test"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1)
+```
+
+**If package.json has a test script:**
+- Run `npm test`
+- If tests pass: proceed to verify_phase_goal
+- If tests fail: report test failures, still proceed to verify_phase_goal
+
+**If no test script detected:**
+- Skip this step, proceed to verify_phase_goal
+
+**Skip for gap phases:** If mode is `gap_closure`, skip test suite. Gap closure plans target specific fixes and run their own verification; the full test suite adds latency without value for small patches.
+</step>
+
 <step name="verify_phase_goal">
 Verify phase achieved its GOAL, not just completed its TASKS.
 
-**Spawn verifier:**
+**Load verifier instructions and spawn:**
+
+```bash
+verifier_instructions_content=$(cat references/verifier-instructions.md)
+```
 
 ```
 Task(
-  prompt="Verify phase {phase_number} goal achievement.
+  prompt="<agent-instructions>\n{verifier_instructions_content}\n</agent-instructions>\n\nVerify phase {phase_number} goal achievement.
 
 Phase directory: {phase_dir}
 Phase goal: {goal from ROADMAP.md}
 
 Check must_haves against actual codebase. Create VERIFICATION.md.
 Verify what actually exists in the code.",
-  subagent_type="kata:kata-verifier",
+  subagent_type="general-purpose",
   model="{verifier_model}"
 )
 ```

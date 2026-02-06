@@ -3,14 +3,8 @@ name: kata-check-issues
 description: Review open issues, selecting an issue to work on, filtering issues by area, pulling GitHub issues, or deciding what to work on next. Triggers include "check issues", "list issues", "what issues", "open issues", "show issues", "view issues", "select issue to work on", "github issues", "backlog issues", "pull issues", "check todos" (deprecated), "list todos" (deprecated), "pending todos" (deprecated).
 metadata:
   version: "0.2.0"
-user-invocable: true
-disable-model-invocation: false
-allowed-tools:
-  - Read
-  - Write
-  - Bash
+allowed-tools: Read Write Bash
 ---
-
 <objective>
 List all open issues, allow selection, load full context for the selected issue, and route to appropriate action.
 
@@ -407,7 +401,7 @@ When the phase PR merges, the issue will close automatically.
 
 **Create Phase:** ${ISSUE_TITLE}
 
-`/kata:kata-add-phase ${ISSUE_TITLE}`
+`/kata:kata-add-phase --issue ${ISSUE_FILE}`
 
 <sub>`/clear` first → fresh context window</sub>
 
@@ -570,7 +564,7 @@ Issue remains in open/ until phase work begins.
 No upcoming phases found.
 
 Options:
-- /kata:kata-add-phase ${ISSUE_TITLE} — Create a new phase
+- /kata:kata-add-phase --issue ${ISSUE_FILE} — Create a new phase
 - /kata:kata-track-progress — View current roadmap status
 - Put it back — Return to issue list
 ```
@@ -702,7 +696,7 @@ When the phase PR merges, the issue will close automatically.
 
 **Create Phase:** ${ISSUE_TITLE}
 
-`/kata:kata-add-phase ${ISSUE_TITLE}`
+`/kata:kata-add-phase --issue ${ISSUE_FILE}`
 
 <sub>`/clear` first → fresh context window</sub>
 
@@ -840,7 +834,7 @@ Issue remains in open/ until phase work begins.
 No upcoming phases found.
 
 Options:
-- /kata:kata-add-phase ${ISSUE_TITLE} — Create a new phase
+- /kata:kata-add-phase --issue ${ISSUE_FILE} — Create a new phase
 - /kata:kata-track-progress — View current roadmap status
 - Put it back — Return to issue list
 ```
@@ -955,7 +949,7 @@ Opens issue in browser. Return to list.
 Note issue reference in phase planning notes. Keep in open. Return to list or exit.
 
 **Create a phase:**
-Display: `/kata:kata-add-phase [description from issue]`
+Display: `/kata:kata-add-phase --issue [issue file path]`
 Keep in open. User runs command in fresh context.
 
 **Brainstorm approach:**
