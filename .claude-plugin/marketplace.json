@@ -11,7 +11,7 @@
       "name": "kata",
       "source": "./plugins/kata",
       "description": "Spec-driven development framework for Claude Code. Provides structured workflows for requirements gathering, research, planning, execution, and verification.",
-      "version": "1.10.2",
+      "version": "1.10.3",
       "author": {
         "name": "gannonh",
         "url": "https://github.com/gannonh"
