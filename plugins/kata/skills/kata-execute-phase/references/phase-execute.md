@@ -38,8 +38,8 @@ Manage the workspace worktree lifecycle: workspace/ holds the phase branch, plan
 **0. Detection:**
 
 ```bash
-WORKTREE_ENABLED=$(bash scripts/read-config.sh "worktree.enabled" "false")
-PR_WORKFLOW=$(bash scripts/read-config.sh "pr_workflow" "false")
+WORKTREE_ENABLED=$(node "${CLAUDE_PLUGIN_ROOT}/skills/kata-execute-phase/scripts/kata-lib.cjs" read-config "worktree.enabled" "false")
+PR_WORKFLOW=$(node "${CLAUDE_PLUGIN_ROOT}/skills/kata-execute-phase/scripts/kata-lib.cjs" read-config "pr_workflow" "false")
 ```
 
 Store both variables. When `PR_WORKFLOW=false`, skip all worktree operations.
@@ -48,7 +48,7 @@ Store both variables. When `PR_WORKFLOW=false`, skip all worktree operations.
 
 ```bash
 if [ "$PR_WORKFLOW" = "true" ]; then
-  eval "$(bash scripts/create-phase-branch.sh "$PHASE_DIR")"
+  eval "$(bash "${CLAUDE_PLUGIN_ROOT}/skills/kata-execute-phase/scripts/create-phase-branch.sh" "$PHASE_DIR")"
   WORKSPACE_PATH=$WORKSPACE_PATH
   PHASE_BRANCH=$BRANCH
 fi
@@ -62,7 +62,7 @@ Only when both `PR_WORKFLOW=true` AND `WORKTREE_ENABLED=true`:
 
 ```bash
 if [ "$WORKTREE_ENABLED" = "true" ] && [ "$PR_WORKFLOW" = "true" ]; then
-  eval "$(bash scripts/manage-worktree.sh create "$PHASE" "$PLAN" "$PHASE_BRANCH")"
+  eval "$(bash "${CLAUDE_PLUGIN_ROOT}/skills/kata-execute-phase/scripts/manage-worktree.sh" create "$PHASE" "$PLAN" "$PHASE_BRANCH")"
   # WORKTREE_PATH now set (e.g., "plan-50-01")
 fi
 ```
@@ -92,7 +92,7 @@ Only when both `PR_WORKFLOW=true` AND `WORKTREE_ENABLED=true`:
 
 ```bash
 if [ "$WORKTREE_ENABLED" = "true" ] && [ "$PR_WORKFLOW" = "true" ]; then
-  bash scripts/manage-worktree.sh merge "$PHASE" "$PLAN" "$PHASE_BRANCH" "$WORKSPACE_PATH"
+  bash "${CLAUDE_PLUGIN_ROOT}/skills/kata-execute-phase/scripts/manage-worktree.sh" merge "$PHASE" "$PLAN" "$PHASE_BRANCH" "$WORKSPACE_PATH"
 fi
 ```
 
@@ -114,7 +114,7 @@ When `PR_WORKFLOW=false`: No branch operations. Standard behavior.
 After the PR is merged (or local merge completed):
 
 ```bash
-bash scripts/manage-worktree.sh cleanup-phase "$WORKSPACE_PATH" "$PHASE_BRANCH"
+bash "${CLAUDE_PLUGIN_ROOT}/skills/kata-execute-phase/scripts/manage-worktree.sh" cleanup-phase "$WORKSPACE_PATH" "$PHASE_BRANCH"
 ```
 
 Switches workspace/ back to workspace-base branch and deletes the phase branch. No directory removal: workspace/ persists.
@@ -331,7 +331,7 @@ Execute each wave in sequence. Autonomous plans within a wave run in parallel.
    CONFIG_CONTENT=$(cat .planning/config.json 2>/dev/null)
 
    # Resolve summary template (project override -> plugin default)
-   SUMMARY_TEMPLATE_PATH=$(bash "./scripts/resolve-template.sh" "summary-template.md")
+   SUMMARY_TEMPLATE_PATH=$(node "${CLAUDE_PLUGIN_ROOT}/skills/kata-execute-phase/scripts/kata-lib.cjs" resolve-template "summary-template.md")
    SUMMARY_TEMPLATE_CONTENT=$(cat "$SUMMARY_TEMPLATE_PATH")
    ```
 
